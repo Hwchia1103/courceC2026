@@ -1,77 +1,75 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include<stdbool.h>
 
-const int month[12] = {3, -1, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3};
-const int q_month[12] = {3, 0, 3, 2, 3, 2, 3, 3, 2, 3, 2, 3};
-
-void swap(int arr[], int a, int b){
-	int temp = arr[a];
-	arr[a] = arr[b];
-	arr[b] = temp;
+int cmp(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
 }
 
-int permutation(int arr[], int n, int i, int j){
-	int possible = 0;
-	int res_normal = arr[0];
-	int res_q = arr[0];
-	
-	for(int k=0; k<n-1; k++){
-		res_normal = ((res_normal + month[k]) % 7);
-		res_q = ((res_q + month[k]) % 7);
-	}
-	if(res_normal == arr[11] || res_q == arr[11]){
-		possible = 1;
-		return possible;	
-	}
-	else{
-		possible = 0;
-		return possible;	
-	} 
-		
-	swap(arr, i, j);
-	permutation(arr, n, i+1, j);
-	swap(arr, i, j);
-
-	
-	
-}
 int main(){
-	//const int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-	//const int q_month[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-	
-	//const int month[12] = {4, 0, 4, 3, 4, 3, 4, 4, 3, 4, 3, 4};
-	//const int q_month[12] = {4, 1, 4, 3, 4, 3, 4, 4, 3, 4, 3, 4};
-	
-	
 
-	int num[12];
-	int possible = false;
-	
+	int input[12];
+	bool possible = false;
+	// input
 	for(int i=0; i<12; i++){
-		scanf("%d", &num[i]);
+		scanf("%d", &input[i]);
 	}
-	
-	//normal
+	// sort input
+	int sort_input[12];
 	for(int i=0; i<12; i++){
+		sort_input[i] = input[i];
+	}
+	qsort(sort_input, 12, sizeof(int), cmp);
+
+	int norm_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int leap_days[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+	// create table
+	int month_table[14][12];
+	// norm
+	for(int i = 0; i < 7; i++){
+        month_table[i][0] = i + 1;
+        for(int j = 1; j < 12; j++){
+            // 推算下個月：(這個月起始日 + 這個月天數 - 1) % 7 + 1
+            month_table[i][j] = (month_table[i][j-1] + norm_days[j-1] - 1) % 7 + 1;
+        }
+    }
+	//leap
+	for(int i = 0; i < 7; i++){
+        month_table[i+7][0] = i + 1;
+        for(int j = 1; j < 12; j++){
+            month_table[i+7][j] = (month_table[i+7][j-1] + leap_days[j-1] - 1) % 7 + 1;
+        }
+    }
+	// compare
+	for(int i = 0; i < 14; i++){
+		int temp_row[12];
 		for(int j=0; j<12; j++){
-			possible = permutation(num, 12, i, j);
-			if(possible)break;
+			temp_row[j] = month_table[i][j];
 		}
-		if(possible)break;
+
+		qsort(temp_row, 12, sizeof(int), cmp);
+
+		bool match = true;
+        for(int j = 0; j < 12; j++){
+            if(temp_row[j] != sort_input[j]){
+                match = false;
+                break;
+            }
+        }
+
+		if(match){
+            possible = true;
+            for(int j = 0; j < 11; j++){
+                printf("%d ", month_table[i][j]);
+            }
+            printf("%d\n", month_table[i][11]);
+            break; // 找到了就不用再往下找了
+        }
 	}
-	//q
+	// print
 	if(!possible){
-		
-	}
-	//print
-	if(possible){
-		for(int i=0; i<11; i++){
-			printf("%d ", num[i]);
-		}
-		printf("%d", num[11]);
-	}
-	else{
-		printf("impossible\n");
+		printf("Impossible\n");
 	}
 	return 0;
 }
